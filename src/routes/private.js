@@ -1,6 +1,8 @@
 import Router from "koa-router";
 import JWT from "koa-jwt";
-import {Todo} from "../models";
+import {User, Todo} from "../models";
+import config from "../config";
+
 
 export const privateRoutes = () => {
   const todosRouter = new Router({
@@ -8,9 +10,33 @@ export const privateRoutes = () => {
   });
 
   const authMiddleware = () => JWT({
-    secret: "secret",
-    key: "user"
+    secret: config.secretToken,
+    key: "user",
+    passthrough: true
   });
+
+  const handleValidToken = async (ctx, next) => {
+    const {jwtOriginalError, user} = ctx.state;
+
+    if(jwtOriginalError){
+      ctx.response.status = 401;
+      return ctx.response.body = {
+        message: "Authorized error"
+      };
+    }
+    else {
+      const authUser = await User.findById(user.id);
+
+      if(!authUser) {
+        ctx.response.status = 401;
+        return ctx.response.body = {
+          message: "Authorized error"
+        };
+      }
+
+      await next();
+    }
+  }
 
   todosRouter.get('/', async ctx => {
     const userId = ctx.state.user.id;
@@ -139,7 +165,7 @@ export const privateRoutes = () => {
     }
   });
 
-  return [authMiddleware(), todosRouter.routes()];
+  return [authMiddleware(), handleValidToken, todosRouter.routes()];
 }
 
 

@@ -1,7 +1,6 @@
 import Koa from "koa";
 import bodyParser from "koa-bodyparser";
 import Router from "koa-router";
-import JWT from "koa-jwt";
 
 import {connection, Todo, User} from "./models";
 
@@ -20,16 +19,15 @@ const bootstrap = async fn => {
   app.use(bodyParser());
 
   app.use(async(ctx, next) => {
-    ctx.set('Access-Control-Allow-Origin', '*');
-    ctx.set('Access-Control-Allow-Headers', '*');
-    ctx.set('Access-Control-Allow-Methods', '*');
+    ctx.set('Access-Control-Allow-Origin', 'http://127.0.0.1:5500');
+    ctx.set('Access-Control-Allow-Headers', 'Content-type, Authorization');
+    ctx.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    ctx.set('Access-Control-Allow-Credentials', 'true')
     if(ctx.request.method === "OPTIONS") {
       ctx.response.status = 204;
     }
     else await next()
   });
-
-
 
   rootRouter.use(...publicRoutes());
   rootRouter.use(...privateRoutes());
