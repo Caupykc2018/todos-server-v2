@@ -1,4 +1,6 @@
 import Router from "koa-router";
+import jwt from "jsonwebtoken";
+import {User} from "../models";
 
 export const publicRoutes = () => {
   const authRouter = new Router();
@@ -16,10 +18,12 @@ export const publicRoutes = () => {
         }
       }
 
+      const token = jwt.sign({id: user._id}, "secret");
+
       ctx.response.status = 200
       return ctx.response.body = {
-          id: user._id,
-          login: user.login
+        token: `Bearer ${token}`,
+        login: user.login
       };
     }
     catch(e) {
@@ -36,8 +40,10 @@ export const publicRoutes = () => {
     try {
       const user = await User.create({login: login, password: password});
 
+      const token = jwt.sign({id: user._id}, "secret");
+
       ctx.body = {
-        id: user._id,
+        token: `Bearer ${token}`,
         login: user.login
       };
     }
