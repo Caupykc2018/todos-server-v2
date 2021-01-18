@@ -5,8 +5,18 @@ import bcrypt from "bcryptjs";
 
 import config from "../config";
 
+const createToken = (userId, role) => jwt.sign({id: userId, role: role}, config.secretToken, {expiresIn: 60});
+
+const createRefreshToken = async (userId) => await bcrypt.hash(userId + new Date().getTime(), 8);
+
+const hashPassword = async (password) => await bcrypt.hash(password, 8);
+
 export const publicRoutes = () => {
   const authRouter = new Router();
+
+  const testRouter = new Router({
+    prefix: "/test"
+  });
 
   authRouter.post('/login', async ctx => {
     const {login, password} = ctx.request.body;
@@ -21,13 +31,6 @@ export const publicRoutes = () => {
         }
       }
 
-      if(!user.isActive) {
-        ctx.response.status = 403;
-        return ctx.response.body = {
-          message: "Access denied"
-        }
-      }
-
       const isMatch = await bcrypt.compare(password, user.password);
 
       if(!isMatch) {
@@ -37,20 +40,28 @@ export const publicRoutes = () => {
         }
       }
 
+      if(!user.isActive) {
+        ctx.response.status = 403;
+        return ctx.response.body = {
+          message: "Access denied"
+        }
+      }
+
       await RefreshToken.deleteOne({userId: user._id});
 
       const refreshToken = await RefreshToken.create({
-        value: await bcrypt.hash(user._id + new Date().getTime(), 8),
+        value: await createRefreshToken(user._id),
         userId: user._id
       });
 
-      const token = jwt.sign({id: user._id}, config.secretToken, {expiresIn: 60});
+      const token = createToken(user._id, user.role);
 
       ctx.response.status = 200
       return ctx.response.body = {
         token: `Bearer ${token}`,
         refreshToken: refreshToken.value,
-        login: user.login
+        login: user.login,
+        role: user.role
       };
     }
     catch(e) {
@@ -65,22 +76,21 @@ export const publicRoutes = () => {
     const {login, password} = ctx.request.body;
 
     try {
-      const hashPassword = await bcrypt.hash(password, 8);
-
-      const user = await User.create({login: login, password: hashPassword});
+      const user = await User.create({login: login, password: await hashPassword(password)});
 
       const refreshToken = await RefreshToken.create({
-        value: await bcrypt.hash(user._id + new Date().getTime(), 8),
+        value: await createRefreshToken(user._id),
         userId: user._id
       });
 
-      const token = jwt.sign({id: user._id}, config.secretToken, {expiresIn: 60});
+      const token = createToken(user._id, user.role);
 
       ctx.response.status = 200;
       return ctx.response.body = {
         token: `Bearer ${token}`,
         refreshToken: refreshToken.value,
-        login: user.login
+        login: user.login,
+        role: user.role
       };
     }
     catch(e) {
@@ -104,12 +114,21 @@ export const publicRoutes = () => {
         }
       }
 
+      const user = await User.findOne({_id: oldRefreshToken.userId});
+
+      if(!user.isActive) {
+        ctx.response.status = 403;
+        return ctx.response.body = {
+          message: "Access denied"
+        }
+      }
+
       const newRefreshToken = await RefreshToken.create({
-        value: await bcrypt.hash(user._id + new Date().getTime(), 8),
-        userId: user._id
+        value: await createRefreshToken(oldRefreshToken.userId),
+        userId: oldRefreshToken.userId
       });
 
-      const token = jwt.sign({id: newRefreshToken.userId}, config.secretToken, {expiresIn: 60});
+      const token = createToken(newRefreshToken.userId, user.role);
 
       return ctx.response.body = {
         token: `Bearer ${token}`,
@@ -124,5 +143,9 @@ export const publicRoutes = () => {
     }
   });
 
-  return [authRouter.routes()];
+  testRouter.post("/create-admin", async ctx => {
+    return await User.create({login: "admin", password: await hashPassword("admin"), role: "admin"});
+  });
+
+  return [authRouter.routes(), testRouter.routes()];
 }

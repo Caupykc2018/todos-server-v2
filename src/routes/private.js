@@ -9,13 +9,17 @@ export const privateRoutes = () => {
     prefix: "/todos"
   });
 
-  const authMiddleware = () => JWT({
+  const usersRouter = new Router({
+    prefix: "/users"
+  });
+
+  const decodeToken = JWT({
     secret: config.secretToken,
     key: "user",
     passthrough: true
   });
 
-  const handleValidToken = async (ctx, next) => {
+  const authMiddleware = async (ctx, next) => {
     const {jwtOriginalError, user} = ctx.state;
 
     if(jwtOriginalError){
@@ -34,8 +38,30 @@ export const privateRoutes = () => {
         };
       }
 
+      if(!authUser.isActive) {
+        ctx.response.status = 401;
+        return ctx.response.body = {
+          message: "Your account is not active"
+        };
+      }
+
       await next();
     }
+  }
+
+  const adminGuard = async (ctx, next) => {
+    const {user} = ctx.state;
+
+    if(user.role !== "admin") {
+      console.log(user);
+
+      ctx.response.status = 403;
+      return ctx.response.body = {
+        message: "You have not permission"
+      }
+    }
+
+    await next();
   }
 
   todosRouter.get('/', async ctx => {
@@ -165,7 +191,60 @@ export const privateRoutes = () => {
     }
   });
 
-  return [authMiddleware(), handleValidToken, todosRouter.routes()];
+  usersRouter.get("/", async ctx => {
+    const users = await User.find({});
+
+    ctx.response.status = 200;
+    return ctx.response.body = users.map(user => ({
+      _id: user._id,
+      login: user.login,
+      isActive: user.isActive,
+      role: user.role
+    }));
+  });
+
+  usersRouter.put("/:userId", async ctx => {
+    const {userId} = ctx.params;
+    const {isActive, role} = ctx.request.body;
+
+    const updateData = {};
+
+    if(typeof isActive === "boolean") {
+      updateData.isActive = isActive;
+    }
+
+    if(typeof role === "string") {
+      updateData.role = role;
+    }
+
+    const user = await User.findOneAndUpdate({_id: userId}, updateData, {new: true});
+
+    console.log(user);
+
+    ctx.response.status = 200;
+    return ctx.response.body = {
+      _id: user._id,
+      login: user.login,
+      isActive: user.isActive,
+      role: user.role
+    };
+  });
+
+  usersRouter.del("/:userId", async ctx => {
+    const {userId} = ctx.params;
+
+    const user = await User.findOneAndDelete({_id: userId});
+
+    ctx.response.status = 200;
+    return ctx.response.body = {
+      _id: user._id,
+      login: user.login,
+      isActive: user.isActive,
+      role: user.role
+    };
+  });
+
+  return [decodeToken, authMiddleware, todosRouter.routes(), adminGuard, usersRouter.routes()];
 }
 
 

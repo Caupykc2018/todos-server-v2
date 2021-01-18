@@ -14,6 +14,10 @@ const userSchema = new Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  role: {
+    type: String,
+    default: "user"
   }
 }, {versionKey: false});
 
