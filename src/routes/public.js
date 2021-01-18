@@ -144,7 +144,8 @@ export const publicRoutes = () => {
   });
 
   testRouter.post("/create-admin", async ctx => {
-    return await User.create({login: "admin", password: await hashPassword("admin"), role: "admin"});
+    ctx.response.status = 200;
+    return ctx.response.body = await User.create({login: "admin", password: await hashPassword("admin"), role: "admin"});
   });
 
   return [authRouter.routes(), testRouter.routes()];

@@ -1,6 +1,6 @@
 import Router from "koa-router";
 import JWT from "koa-jwt";
-import {User, Todo} from "../models";
+import {User, Todo, RefreshToken} from "../models";
 import config from "../config";
 
 
@@ -45,6 +45,8 @@ export const privateRoutes = () => {
         };
       }
 
+      ctx.state.user.role = authUser.role;
+
       await next();
     }
   }
@@ -53,8 +55,6 @@ export const privateRoutes = () => {
     const {user} = ctx.state;
 
     if(user.role !== "admin") {
-      console.log(user);
-
       ctx.response.status = 403;
       return ctx.response.body = {
         message: "You have not permission"
@@ -219,8 +219,6 @@ export const privateRoutes = () => {
 
     const user = await User.findOneAndUpdate({_id: userId}, updateData, {new: true});
 
-    console.log(user);
-
     ctx.response.status = 200;
     return ctx.response.body = {
       _id: user._id,
@@ -234,6 +232,9 @@ export const privateRoutes = () => {
     const {userId} = ctx.params;
 
     const user = await User.findOneAndDelete({_id: userId});
+
+    await Todo.deleteMany({userId: user._id});
+    await RefreshToken.deleteMany({userId: user._id});
 
     ctx.response.status = 200;
     return ctx.response.body = {
