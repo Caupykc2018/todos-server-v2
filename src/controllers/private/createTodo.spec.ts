@@ -1,8 +1,8 @@
-import { bootstrap } from '../../server';
 import * as request from 'supertest';
 import { Server } from 'http';
-import { createToken } from '../../utilities';
 import { getRepository, Repository } from 'typeorm';
+import { createToken } from '../../utilities';
+import { bootstrap } from '../../server';
 import { Todo } from '../../models';
 
 describe('POST /api/todos', () => {

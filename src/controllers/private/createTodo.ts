@@ -4,7 +4,7 @@ import { ADD_TODO, SOCKET_CHANGES } from '../../constants';
 
 export const createTodo = async (ctx: IContext) => {
   const { todoRepository } = ctx;
-  const { socketid: SocketId } = ctx.request.header;
+  const { socketid } = ctx.request.header;
   const { user } = ctx.state;
 
   const { title } = ctx.request.body;
@@ -20,12 +20,12 @@ export const createTodo = async (ctx: IContext) => {
   try {
     const todo = await todoRepository.createAndSave(title, user);
 
-    if (SocketId) {
+    if (socketid) {
       emitSocketsById(
         SOCKET_CHANGES,
         { type: ADD_TODO, payload: { todo } },
         user.id,
-        SocketId
+        socketid
       );
     }
 

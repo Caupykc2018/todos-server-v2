@@ -1,5 +1,5 @@
 import { DeepPartial, EntityTarget } from 'typeorm';
-import { ParameterizedContext } from 'koa';
+import { ParameterizedContext, Request } from 'koa';
 import { IRouterParamContext } from 'koa-router';
 import { Server } from 'socket.io';
 import { RefreshToken, Todo, User } from '../models';
@@ -64,6 +64,12 @@ export interface IContext
     userIds?: number[];
     todoIds?: number[];
   };
+
+  request: {
+    header: {
+      socketid?: string
+    }
+  } & Request
 
   io: Server;
 }
