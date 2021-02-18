@@ -5,8 +5,8 @@
   "main": "index.ts",
   "scripts": {
     "test": "npm run migration && jest",
-    "start": "set NODE_ENV=development && nodemon src/index.ts",
-    "migration": "set \"NODE_ENV=test\" && ts-node src/migrations/index.ts"
+    "start": "NODE_ENV=development && nodemon src/index.ts",
+    "migration": "NODE_ENV=test && ts-node src/migrations/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -45,13 +45,13 @@
     "koa-router": "^10.0.0",
     "mariadb": "^2.5.2",
     "moment": "^2.29.1",
-    "mongoose": "^5.11.11",
+    "mongodb": "3.6.3",
     "mysql": "^2.18.1",
     "reflect-metadata": "^0.1.13",
     "socket.io": "^3.1.0",
     "supertest": "^6.1.3",
     "ts-jest": "^26.4.4",
-    "typeorm": "^0.2.31"
+    "typeorm": "0.2.30"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
