@@ -2,18 +2,18 @@ import * as Koa from 'koa';
 import * as bodyParser from 'koa-bodyparser';
 import * as Router from 'koa-router';
 
+import { getCustomRepository } from 'typeorm';
+import { createServer } from 'http';
 import { connection } from './models/connection';
 
 import { publicRoutes } from './routes/public';
 import { privateRoutes } from './routes/private';
 import { IContext } from './interfaces';
-import { getCustomRepository } from 'typeorm';
 import {
   RefreshTokenRepository,
   TodoRepository,
   UserRepository,
 } from './repositories';
-import { createServer } from 'http';
 import { createSocket } from './socket';
 
 export const bootstrap = async () => {
