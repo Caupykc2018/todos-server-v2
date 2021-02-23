@@ -68,6 +68,9 @@ export interface IContext
   request: {
     header: {
       socketid?: string
+    },
+    query: {
+      sortCreatedAt?: 'ASC' | 'DESC'
     }
   } & Request
 

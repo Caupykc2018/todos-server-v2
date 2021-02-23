@@ -11,8 +11,11 @@ import { IContext } from '../../interfaces';
 export const getAllTodos = async (ctx: IContext) => {
   const { todoRepository } = ctx;
   const { user } = ctx.state;
-  const { start, end, search } = ctx.request.query;
+  const {
+    start, end, search, sortCreatedAt
+  } = ctx.request.query;
   const filters: { createdAt?: FindOperator<string> } = {};
+  const order: { createdAt: 'ASC' | 'DESC' } = { createdAt: sortCreatedAt };
 
   const convertStartDate = start && moment(new Date(Number(start))).format();
   const convertEndDate = end && moment(new Date(Number(end))).format();
@@ -27,9 +30,12 @@ export const getAllTodos = async (ctx: IContext) => {
 
   try {
     const todos = await todoRepository.find({
-      userId: user.id,
-      title: Like(`%${search || ''}%`),
-      ...filters,
+      where: {
+        userId: user.id,
+        title: Like(`%${search || ''}%`),
+        ...filters,
+      },
+      order,
     });
 
     ctx.response.status = 200;
