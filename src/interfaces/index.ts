@@ -70,7 +70,9 @@ export interface IContext
       socketid?: string
     },
     query: {
-      sortCreatedAt?: 'ASC' | 'DESC'
+      sortCreatedAt?: 'ASC' | 'DESC',
+      take?: string,
+      skip?: string
     }
   } & Request
 

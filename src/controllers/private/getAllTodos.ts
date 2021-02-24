@@ -12,10 +12,14 @@ export const getAllTodos = async (ctx: IContext) => {
   const { todoRepository } = ctx;
   const { user } = ctx.state;
   const {
-    start, end, search, sortCreatedAt
+    start, end, search, sortCreatedAt, take, skip
   } = ctx.request.query;
   const filters: { createdAt?: FindOperator<string> } = {};
-  const order: { createdAt: 'ASC' | 'DESC' } = { createdAt: sortCreatedAt };
+  const order: { createdAt?: 'ASC' | 'DESC' } = { createdAt: sortCreatedAt };
+  const pagination: { take?: number, skip?: number } = {
+    take: take ? Number(take) : undefined,
+    skip: skip ? Number(skip) : undefined
+  };
 
   const convertStartDate = start && moment(new Date(Number(start))).format();
   const convertEndDate = end && moment(new Date(Number(end))).format();
@@ -36,6 +40,7 @@ export const getAllTodos = async (ctx: IContext) => {
         ...filters,
       },
       order,
+      ...pagination
     });
 
     ctx.response.status = 200;
